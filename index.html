@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EY Candidate Matcher - Decision Support System</title>
+    
+    <style>
+      :root {
+        --ey-yellow: #FFE600;
+        --ey-black: #1A1A1A;
+        --ey-grey-dark: #2E2E2E;
+        --ey-grey-light: #F4F4F4;
+        --ey-text: #333333;
+        --ey-text-light: #FFFFFF;
+        --border-radius: 4px;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        background-color: var(--ey-grey-light);
+        color: var(--ey-text);
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      header {
+        background-color: var(--ey-black);
+        color: var(--ey-text-light);
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 4px solid var(--ey-yellow);
+      }
+
+      header h1 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+
+      header h1 span {
+        color: var(--ey-yellow);
+        font-weight: 700;
+      }
+
+      .tagline {
+        font-size: 0.85rem;
+        color: #999;
+        margin-top: 5px;
+      }
+
+      main {
+        max-width: 1400px;
+        width: 100%;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        display: grid;
+        grid-template-columns: 1fr 1.2fr 1.2fr;
+        gap: 1.5rem;
+      }
+
+      @media (max-width: 1024px) {
+        main { grid-template-columns: 1fr; }
+      }
+
+      .panel {
+        background: white;
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        display: flex;
+        flex-direction: column;
+        min-height: 450px;
+      }
+
+      .panel h2 {
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 1.5rem;
+        color: var(--ey-grey-dark);
+        border-left: 3px solid var(--ey-yellow);
+        padding-left: 10px;
+      }
+
+      /* COLUNA 1: UPLOAD BOX */
+      .upload-box {
+        border: 2px dashed #CCCCCC;
+        padding: 3rem 1.5rem;
+        text-align: center;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: #FAFAFA;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .upload-box:hover {
+        border-color: var(--ey-black);
+        background: #F0F0F0;
+      }
+
+      .upload-box p {
+        font-size: 0.9rem;
+        color: #666;
+        margin-top: 0.5rem;
+      }
+
+      .upload-box .subtext {
+        font-size: 0.8rem;
+        color: #999;
+      }
+
+      .upload-box .icon {
+        font-size: 2.5rem;
+        color: #999;
+      }
+
+      /* COLUNA 2: JOB DESCRIPTIONS LIST */
+      .jd-manual-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        flex-grow: 1;
+      }
+
+      .jd-tags-list-vertical {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .jd-tag {
+        background: #FAFAFA;
+        border: 1px solid #E0E0E0;
+        color: var(--ey-text);
+        padding: 0.85rem 1.2rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-radius: var(--border-radius);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .jd-tag::after {
+        content: "→";
+        opacity: 0.3;
+        transition: opacity 0.2s;
+      }
+
+      .jd-tag:hover {
+        border-color: var(--ey-black);
+        background: #F0F0F0;
+      }
+
+      .jd-tag.active {
+        background: var(--ey-black);
+        color: var(--ey-text-light);
+        border-color: var(--ey-black);
+        box-shadow: inset 3px 0 0 var(--ey-yellow);
+      }
+
+      .jd-tag.active::after {
+        opacity: 1;
+        color: var(--ey-yellow);
+      }
+
+      .add-jd-row {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: auto;
+        padding-top: 1rem;
+        border-top: 1px solid #EAEAEA;
+      }
+
+      .add-jd-row input {
+        flex: 1;
+        padding: 0.6rem;
+        border: 1px solid #CCCCCC;
+        border-radius: var(--border-radius);
+        font-size: 0.85rem;
+      }
+
+      .add-jd-row input:focus {
+        outline: none;
+        border-color: var(--ey-black);
+      }
+
+      #add-jd-btn {
+        background: var(--ey-grey-dark);
+        border: none;
+        color: white;
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: var(--border-radius);
+        transition: background 0.2s;
+      }
+
+      #add-jd-btn:hover {
+        background: #444;
+      }
+
+      /* BOTÃO PRINCIPAL */
+      .btn-primary {
+        background-color: var(--ey-black);
+        color: var(--ey-text-light);
+        border: none;
+        padding: 0.85rem 1.5rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        width: 100%;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 1.5rem;
+      }
+
+      .btn-primary:hover {
+        background-color: #333333;
+        box-shadow: inset 0 -3px 0 var(--ey-yellow);
+      }
+
+      /* COLUNA 3: RESULTADOS E LOADING ANIMAÇÃO */
+      .results-list {
+        list-style: none;
+      }
+
+      .empty-state {
+        color: #888;
+        font-style: italic;
+        font-size: 0.9rem;
+        text-align: center;
+        padding: 3rem 0;
+      }
+
+      .candidate-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid #EAEAEA;
+        animation: fadeIn 0.4s ease forwards;
+        opacity: 0;
+      }
+
+      .candidate-name {
+        font-weight: 600;
+        color: var(--ey-grey-dark);
+      }
+
+      .match-badge {
+        background: #E6F4EA;
+        color: #137333;
+        padding: 0.35rem 0.75rem;
+        font-weight: 700;
+        font-size: 0.9rem;
+        border-radius: 2px;
+        border-left: 3px solid #137333;
+      }
+
+      /* --- ELEMENTO DE LOADING (SPINNER) --- */
+      .loading-container {
+        display: none; /* Escondido por defeito */
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem 0;
+        flex-grow: 1;
+      }
+
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #EAEAEA;
+        border-top: 5px solid var(--ey-black);
+        border-right: 5px solid var(--ey-yellow); /* Toque EY no spinner */
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+      }
+
+      .loading-text {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--ey-grey-dark);
+        letter-spacing: 0.5px;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* From style.css */
+      .jd-manual-container {
+        margin-top: 1.5rem;
+        padding: 1.5rem 0;
+        border-top: 1px solid #EAEAEA;
+      }
+      .section-label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--ey-grey-dark);
+        margin-bottom: 1rem;
+        letter-spacing: 0.5px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>EY <span>Candidate Matcher</span></h1>
+        <p class="tagline">Decision Support System | Human Capital</p>
+      </div>
+      <div>
+        <small>Building a better working world</small>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel">
+        <h2>1. Candidate Repository</h2>
+        <div class="upload-box" id="cv-upload-zone">
+          <input type="file" id="cv-file-input" multiple accept=".pdf" style="display: none;" />
+          <div class="icon">📁</div>
+          <p><strong id="cv-status">Upload Candidate CVs</strong></p>
+          <p class="subtext">Click to select or drag multiple PDFs</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>2. Job Descriptions</h2>
+        <div class="jd-manual-container">
+          <div class="jd-tags-list-vertical" id="jd-tags-container">
+            <button class="jd-tag" data-value="Consulting">Consulting</button>
+            <button class="jd-tag" data-value="Risk Advisory">Risk Advisory</button>
+            <button class="jd-tag" data-value="Cybersecurity">Cybersecurity</button>
+            <button class="jd-tag" data-value="Financial Services">Financial Services</button>
+            <button class="jd-tag" data-value="Forensic">Forensic</button>
+          </div>
+
+          <div class="add-jd-row">
+            <input type="text" id="new-jd-input" placeholder="Add custom role..." />
+            <button type="button" id="add-jd-btn">Add</button>
+          </div>
+        </div>
+        
+        <button class="btn-primary" id="match-btn">Match Candidates</button>
+      </section>
+
+      <section class="panel" id="results-panel">
+        <h2>3. Optimal Matches</h2>
+        
+        <div class="loading-container" id="loading-area">
+          <div class="spinner"></div>
+          <p class="loading-text">EY AI Processing Data...</p>
+        </div>
+
+        <ul class="results-list" id="results-list">
+          <p class="empty-state">Select a Job Description and run analysis to view metrics...</p>
+        </ul>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

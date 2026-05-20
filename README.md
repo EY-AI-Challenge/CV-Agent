@@ -1,139 +1,97 @@
-![alt text](https://github.com/EYAIChallenge/Overview/blob/main/Banner-EY-1280x640.jpg "EY AI Challenge")
+# EY Candidate Matcher — Decision Support System
 
-<h1 align="center"> <img src="https://github.com/EYAIChallenge/Overview/blob/main/EY_Logo_Beam_RGB_White_Yellow.png" width="40" alt="Logo"/> AI Challenge 2026 | CV Analyzer Agent Challenge </h1>
+AI-powered platform that evaluates candidate CVs against job descriptions and produces structured hiring recommendations. Built for the **EY AI Challenge**.
 
-## 📄 Description
+## How it works
 
-In this strategic consulting challenge, your team will partner with **EY's talent acquisition department** to revolutionize their candidate selection process for **5 critical open positions**.
+1. Recruiter uploads one or more CV PDFs and selects a target role
+2. The platform extracts text from each PDF and sends it to an **n8n AI Agent** via webhook
+3. The agent scores the candidate across 5 dimensions and returns a structured JSON analysis
+4. Results are displayed with scores, decision, risk flags, and interview questions
+5. Results are cached in SQLite to avoid redundant LLM calls
 
-As consultants, you'll develop an **AI-powered talent intelligence solution** that transforms how the organization **identifies, evaluates**, and **engages top talent**.
+## Stack
 
-Your solution may take various forms:
-- A **decision support system** that identifies optimal candidate-role matches.
-- An **intelligent recommendation engine** surfacing high-potential candidates.
-- A **strategic interview platform** generating personalized assessment questions.
-- Or any other innovative AI-driven approach.
+| Layer | Technology |
+|---|---|
+| Frontend | Vanilla JS + HTML/CSS, served by Flask |
+| Backend | Python 3 + Flask |
+| AI Orchestration | n8n (self-hosted cloud) |
+| PDF Extraction | pypdf |
+| Database | SQLite |
 
-### 🎯 Objective
-Demonstrate how **strategic application of AI** can:
-- Enhance recruitment quality.
-- Improve candidate experience.
-- Reduce time-to-hire.
-- Deliver a competitive advantage in the war for talent.
+## Setup
 
----
+**Requirements:** Python 3.9+
 
-## 🗂 Data
+```bash
+git clone <repo-url>
+cd ey-matching-dss
+pip3 install -r requirements.txt
+python3 app.py
+```
 
-The dataset consists of:
-- 📄 **107 candidate CVs** (PDF format)
-- 🧾 **5 job descriptions** (PDF format)
+Open **http://localhost:8080** in your browser.
 
----
+> **Note:** Port 5000 is reserved by AirPlay on macOS — the app runs on 8080.
 
-## 🧠 Consulting Mindset Expectations
+## Configuration
 
-- **Business Problem Solvers**: Address real hiring pain points.
-- **Insight Providers**: Turn raw CVs into actionable intelligence.
-- **Experience Designers**: Enhance recruiter and candidate journeys.
-- **Sell the Solution**: Present it as a valuable strategic asset to the client.
+Edit the top of `operations.py` to point to your n8n instance:
 
----
+```python
+N8N_BASE_URL  = "https://your-instance.app.n8n.cloud"
+WEBHOOK_KEY   = "your-webhook-uuid"
+WEBHOOK_PATH  = "webhook-test"   # "webhook" for production (active workflow)
+```
 
-## 📦 Deliverables
+For production, set `WEBHOOK_PATH = "webhook"` and activate the workflow in n8n (toggle on the canvas). In test mode (`webhook-test`), you must click **"Execute workflow"** in n8n before each request.
 
-- ✅ A **working prototype** of your solution.
-- ✅ **Organized, well-documented, reproducible code**.
-- ✅ A **strategic presentation** pitching your solution to EY executives.
-- ✅ A technical presentation pitching your solution to the judging panel as if they were the client's IT stakeholders
-- ✅ A frontend for the solution is mandatory for the live demo of the strategic presentation
+## Project structure
 
-🔹 **Optional Enhancements**:  
-- Performance analysis vs traditional knowledge access methods
-  
-<h2 align="center"> ⚠️ **Important Submission Requirement** ⚠️ </h2>
-<h3> ✅ Before the 14h00 deadline</h3>
+```
+ey-matching-dss/
+├── app.py            # Flask server — serves frontend + /api/match endpoint
+├── operations.py     # PDF extraction, n8n requests, SQLite CRUD
+├── index.html        # Single-page UI
+├── src/
+│   └── main.js       # Frontend logic (upload, match, results, detail modal)
+├── requirements.txt
+└── db.db             # SQLite database (auto-created on first run)
+```
 
-Submit you solution to you specific branch:
-- Repository with the code of the solution developed
-  - The solution must be ready to run
-- A README file with the context of the solution and how to run it
+## API
 
----
+### `POST /api/match`
 
-## 🛠 Tech & Tools – You Have Full Freedom
+Multipart form data:
 
-- **Mandatory:**  
-  - Solution must be developed mainly using Python  
-  - You'll publish the solution into a specific branch of the challenge's repository
+| Field | Type | Description |
+|---|---|---|
+| `job_name` | string | Role name (e.g. "Consulting") |
+| `cv_files` | file[] | One or more PDF CVs |
+| `force` | string | `"true"` to bypass cache and re-run |
 
-- **Free to Choose:**  
-  - Libraries/Packages
-  - Visualization
-  - Frontend solution
-  - AI Assistants
+Returns a JSON array, one object per CV, with the full agent evaluation.
 
----
+### `POST /api/cache/clear`
 
-## ⏱ Time Management & Rules
+JSON body: `{ "job_name": "Consulting" }` — clears cached results for that role. Omit `job_name` to clear everything.
 
-- Total Time: **4 hours** – No extensions  
-- Final Presentations: **5 minutes each** – Simulate a client-facing pitch
-  - You must divide the team for the strategic and technical presentations
-- Support:
-  - 🧑‍💻 1 technical session (max 5 minutes)  
-  - 💼 1 business session (max 5 minutes)  
-  - **Note:** Assistants guide only — no direct solutions
+## Scoring model
 
----
+The AI agent scores each candidate out of 100:
 
-## ⚙️ Strategy & Workflow Tips
+| Dimension | Points |
+|---|---|
+| Technical match (skills vs requirements) | 30 |
+| Title / Role match | 25 |
+| Experience & seniority | 25 |
+| Location match | 10 |
+| Language match | 10 |
 
-1. 👥 **Assign roles early** – data analyst, business analyst, presenter.
-2. 🔄 **Work in parallel** – avoid bottlenecks.
-3. 🧑‍🏫 **Start preparing the presentation early**.
-4. 🎯 **Be realistic** – focus on clarity and impact over complexity.
+Candidates below 50% are automatically rejected. The agent also flags risks as **HARD STOP**, **AMBER**, or **LOW**.
 
-> 💡 Success is about **teamwork, structure, clarity, and strategy**, not just code.
+## Caching
 
----
-
-## 💡 Tips for Competitors
-
-- 🎯 Choose your **LLM** strategically: 
-
-- 🧾 **Master the Talent Data**: Look beyond the obvious – identify potential, culture fit, growth signals.
-
-- 🛤 Define a clear **AI Role**: Will it automate, augment, or assist hiring?
-
-- 👥 **Design for All Stakeholders**: Recruiters, hiring managers, and candidates.
-
-- 📊 Show **Measurable Impact**:
-  - Reduced time-to-hire
-  - Improved candidate quality
-  - Cost savings
-
-- 🚀 Think beyond tools – **reinvent the hiring process** itself.
-
-- 📈 Build a **Business Case**: Position your solution as a strategic advantage.
-
-- - **Own what you're doing:**
-  Don't just let the AI create the solution for you without understanding it's core tecnically and funcionally 
-
----
-
-## 🧭 Final Thought
-
-This challenge is your opportunity to **redefine how organizations attract and hire talent**.
-
-🏆 Winning teams will blend:
-- Strategic business insight
-- Clear communication
-- End-to-end stakeholder thinking
-- Technical AI expertise
-
-Deliver a solution that’s not just smart – make it **transformational**.
-
----
-
-### 🏁 Brought to you by **EY AI Challenge**
+Results are stored in `db.db` keyed by `(job_name, cv_filename)`. To re-run an analysis, click **"🔄 Re-analisar"** in the results panel — this clears the cache for the current role and re-submits all CVs to the agent.
